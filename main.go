@@ -6,14 +6,9 @@ import (
 	"net/http"
 )
 
-func foo(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("foo"))
-}
-
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/notifications/{id}", notificationHandler)
-	r.HandleFunc("/", foo)
 
 	http.Handle("/", r)
 
