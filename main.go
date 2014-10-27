@@ -8,10 +8,11 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/notifications/{id}", notificationHandler)
+	r.HandleFunc("/ws/notifications/{id}", notificationHandler)
 
 	http.Handle("/", r)
 
+	log.Println("start ws server")
 	err := http.ListenAndServe(":3210", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

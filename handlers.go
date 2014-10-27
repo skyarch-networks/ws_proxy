@@ -20,6 +20,7 @@ func notificationHandler(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	ws, err := upgrader.Upgrade(w, r, nil)
+	log.Println("upgraded")
 	if err != nil {
 		if _, ok := err.(websocket.HandshakeError); !ok {
 			log.Println(err)
@@ -58,10 +59,12 @@ func writer(ws *websocket.Conn, id string, quit chan int) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			log.Printf("send data: %v", string(v.Data))
 			// case redis.Subscription:
 			// case error:
 		}
 	}
+	log.Println("disconnect websocket")
 }
 
 func reader(ws *websocket.Conn, quit chan int) {
