@@ -57,7 +57,8 @@ func writer(ws *websocket.Conn, id string, quit chan int) {
 		case redis.Message:
 			err = ws.WriteMessage(websocket.TextMessage, v.Data)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
+				return
 			}
 			log.Printf("send data: %v", string(v.Data))
 			// case redis.Subscription:
