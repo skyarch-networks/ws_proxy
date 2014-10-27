@@ -21,13 +21,11 @@ func notificationHandler(w http.ResponseWriter, r *http.Request) {
 	kind := vars["kind"]
 
 	ws, err := upgrader.Upgrade(w, r, nil)
-	log.Println("upgraded")
 	if err != nil {
-		if _, ok := err.(websocket.HandshakeError); !ok {
-			log.Println(err)
-		}
 		log.Println(err)
 		return
+	} else {
+		log.Println("upgraded")
 	}
 
 	quit := make(chan int)
