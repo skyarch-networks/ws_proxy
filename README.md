@@ -9,12 +9,17 @@ go build
 ws endpoint
 =================
 
-`/notification/{id}`
+`/ws/{kind}/{id}`
 
-idは、セッションから取り出す?
+### kind
 
+notifications, cook, etc...
+
+### id
+
+sesssion_id, etc...
 
 redis endpoint
 ================
 
-`subscribe notification.{id}`
+subscribe `{kind}.{id}`
