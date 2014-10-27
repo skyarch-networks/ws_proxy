@@ -28,11 +28,14 @@ func notificationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go writer(ws, id)
-	reader(ws)
+	quit := make(chan int)
+	go writer(ws, id, quit)
+	reader(ws, quit)
 }
 
-func writer(ws *websocket.Conn, id string) {
+func writer(ws *websocket.Conn, id string, quit chan int) {
+	defer ws.Close()
+
 	c, err := redis.Dial("tcp", ":6379")
 	if err != nil {
 		// panic?
@@ -42,7 +45,13 @@ func writer(ws *websocket.Conn, id string) {
 
 	psc := redis.PubSubConn{c}
 	psc.Subscribe("notifications." + id)
-	for {
+
+	loop := true
+	go func() {
+		<-quit
+		loop = false
+	}()
+	for loop {
 		switch v := psc.Receive().(type) {
 		case redis.Message:
 			err = ws.WriteMessage(websocket.TextMessage, v.Data)
@@ -55,12 +64,11 @@ func writer(ws *websocket.Conn, id string) {
 	}
 }
 
-func reader(ws *websocket.Conn) {
-	defer ws.Close()
-
+func reader(ws *websocket.Conn, quit chan int) {
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {
+			quit <- 0
 			break
 		}
 	}
