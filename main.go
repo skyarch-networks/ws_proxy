@@ -8,7 +8,8 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/ws/notifications/{id}", notificationHandler)
+	// kind: notifications, cook, etc...
+	r.HandleFunc("/ws/{kind}/{id}", notificationHandler)
 
 	http.Handle("/", r)
 

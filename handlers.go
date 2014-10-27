@@ -18,6 +18,7 @@ var (
 func notificationHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
+	kind := vars["kind"]
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	log.Println("upgraded")
@@ -30,11 +31,11 @@ func notificationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	quit := make(chan int)
-	go writer(ws, id, quit)
+	go writer(ws, kind, id, quit)
 	reader(ws, quit)
 }
 
-func writer(ws *websocket.Conn, id string, quit chan int) {
+func writer(ws *websocket.Conn, kind string, id string, quit chan int) {
 	defer ws.Close()
 
 	c, err := redis.Dial("tcp", ":6379")
@@ -45,7 +46,7 @@ func writer(ws *websocket.Conn, id string, quit chan int) {
 	defer c.Close()
 
 	psc := redis.PubSubConn{c}
-	psc.Subscribe("notifications." + id)
+	psc.Subscribe(kind + "." + id)
 
 	loop := true
 	go func() {
