@@ -46,6 +46,7 @@ func writer(ws *websocket.Conn, kind string, id string, quit chan int) {
 	psc := redis.PubSubConn{c}
 	psc.Subscribe(kind + "." + id)
 
+	// この辺あやしい
 	loop := true
 	go func() {
 		<-quit
@@ -67,10 +68,12 @@ func writer(ws *websocket.Conn, kind string, id string, quit chan int) {
 	log.Println("disconnect websocket")
 }
 
+// needed?
 func reader(ws *websocket.Conn, quit chan int) {
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {
+			log.Printf("reader error: %v", err)
 			quit <- 0
 			break
 		}
