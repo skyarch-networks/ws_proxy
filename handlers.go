@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"time"
 )
 
 var (
@@ -13,6 +13,12 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
+)
+
+const (
+	writeWait  = 10 * time.Second
+	pongWait   = 60 * time.Second
+	pingPeriod = (pongWait * 9) / 10
 )
 
 func notificationHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,53 +35,61 @@ func notificationHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("upgraded")
 	}
 
-	quit := make(chan int)
+	quit := make(chan bool)
 	go writer(ws, kind, id, quit)
 	reader(ws, quit)
 }
 
-func writer(ws *websocket.Conn, kind string, id string, quit chan int) {
+func writer(ws *websocket.Conn, kind string, id string, quit <-chan bool) {
 	defer ws.Close()
 
-	c, err := redis.Dial("tcp", ":6379")
-	if err != nil {
-		// panic?
-		panic(err)
-	}
-	defer c.Close()
+	pingTicker := time.NewTicker(pingPeriod)
+	defer pingTicker.Stop()
 
-	psc := redis.PubSubConn{c}
-	psc.Subscribe(kind + "." + id)
+	defer log.Println("disconnect websocket")
 
-	// この辺あやしい
-	loop := true
-	go func() {
-		<-quit
-		loop = false
-	}()
-	for loop {
-		switch v := psc.Receive().(type) {
-		case redis.Message:
-			err = ws.WriteMessage(websocket.TextMessage, v.Data)
+	quitSub := make(chan bool)
+	defer func() { quitSub <- true }()
+
+	chs := sub(kind, id, (<-chan bool)(quitSub))
+	for {
+		select {
+		case <-pingTicker.C:
+			ws.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				return
+			}
+			log.Println("ping")
+
+		case v := <-chs:
+			err := ws.WriteMessage(websocket.TextMessage, v)
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			log.Printf("send data: %v", string(v.Data))
-			// case redis.Subscription:
-			// case error:
+			log.Printf("send data: %v", string(v))
+
+		case <-quit:
+			return
 		}
 	}
-	log.Println("disconnect websocket")
 }
 
-// needed?
-func reader(ws *websocket.Conn, quit chan int) {
+func reader(ws *websocket.Conn, quit chan<- bool) {
+	defer ws.Close()
+
+	ws.SetReadLimit(512)
+	ws.SetReadDeadline(time.Now().Add(pongWait))
+	ws.SetPongHandler(func(string) error {
+		log.Println("pong")
+		return ws.SetReadDeadline(time.Now().Add(pongWait))
+	})
+
 	for {
 		_, _, err := ws.ReadMessage()
 		if err != nil {
 			log.Printf("reader error: %v", err)
-			quit <- 0
+			quit <- true
 			break
 		}
 	}

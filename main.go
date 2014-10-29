@@ -9,6 +9,7 @@ import (
 func main() {
 	r := mux.NewRouter()
 	// kind: notifications, cook, etc...
+	// TODO: kind and id validate
 	r.HandleFunc("/ws/{kind}/{id}", notificationHandler)
 
 	http.Handle("/", r)
@@ -18,4 +19,8 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+}
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
