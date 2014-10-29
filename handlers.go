@@ -16,6 +16,7 @@ var (
 )
 
 func notificationHandler(w http.ResponseWriter, r *http.Request) {
+	// params
 	vars := mux.Vars(r)
 	id := vars["id"]
 	kind := vars["kind"]
