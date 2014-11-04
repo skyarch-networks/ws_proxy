@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
 var (
@@ -62,6 +63,7 @@ func writer(ws *websocket.Conn, kind string, id string, quit <-chan bool) {
 			log.Println("ping")
 
 		case v := <-chs:
+			ws.SetWriteDeadline(time.Now().Add(writeWait))
 			err := ws.WriteMessage(websocket.TextMessage, v)
 			if err != nil {
 				log.Println(err)
