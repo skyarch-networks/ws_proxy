@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/garyburd/redigo/redis" // redigoが使いづらい気がする
 	"log"
+
+	"github.com/garyburd/redigo/redis" // redigoが使いづらい気がする
 )
 
 func sub(kind, id string, quit <-chan bool) <-chan []byte {
