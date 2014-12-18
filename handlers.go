@@ -22,7 +22,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 )
 
-func notificationHandler(w http.ResponseWriter, r *http.Request) {
+func wsHandler(w http.ResponseWriter, r *http.Request) {
 	// params
 	vars := mux.Vars(r)
 	id := vars["id"]

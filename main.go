@@ -27,7 +27,7 @@ func main() {
 	r := mux.NewRouter()
 	// kind: notifications, cook, etc...
 	// TODO: kind and id validate
-	r.HandleFunc("/ws/{kind}/{id}", notificationHandler)
+	r.HandleFunc("/ws/{kind}/{id}", wsHandler)
 
 	http.Handle("/", r)
 
