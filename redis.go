@@ -1,6 +1,7 @@
 package main
 
 import (
+        "os"
 	"log"
 
 	"github.com/garyburd/redigo/redis" // redigoが使いづらい気がする
@@ -28,7 +29,7 @@ func sub(kind, id string, quit <-chan bool) <-chan []byte {
 
 func _sub(kind, id string) (<-chan []byte, redis.Conn) {
 	ch := make(chan []byte)
-	c, err := redis.Dial("tcp", ":6379")
+	c, err := redis.Dial("tcp", os.Getenv("REDIS_HOST") + ":6379")
 	if err != nil {
 		panic(err)
 	}
